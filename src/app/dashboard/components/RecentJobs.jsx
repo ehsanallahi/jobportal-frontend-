@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { Card, CardHeader, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function RecentJobs({ userId }) {
   const [recentJobs, setRecentJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter(); // Initialize router
 
   useEffect(() => {
     fetchRecentJobs();
@@ -15,11 +17,14 @@ export default function RecentJobs({ userId }) {
 
   const fetchRecentJobs = async () => {
     try {
-      const res = await fetch('http://localhost:1337/api/jobs?sort=createdAt:desc&pagination[limit]=5', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const res = await fetch(
+        'http://localhost:1337/api/jobs?sort=createdAt:desc&pagination[limit]=5',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       const data = await res.json();
       setRecentJobs(data?.data || []);
     } catch (err) {
@@ -60,7 +65,9 @@ export default function RecentJobs({ userId }) {
             </p>
           </CardContent>
           <CardFooter className="flex justify-end">
-            <Button variant="outline">View Details</Button>
+            <Button variant="outline" onClick={() => router.push('/jobs')}>
+              View More
+            </Button>
           </CardFooter>
         </Card>
       ))}

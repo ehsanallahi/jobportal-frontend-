@@ -160,7 +160,7 @@ export default function DashboardPage() {
       </p>
     </div>
     {/* Skills */}
-    <div className="flex flex-col space-y-4">
+   <div className="flex flex-col space-y-4">
   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Skills</h3>
   {user?.skills && user.skills.length > 0 ? (
     <div className="flex flex-wrap gap-2">
@@ -314,17 +314,7 @@ export default function DashboardPage() {
         <RecentJobs />
       </section>
 
-      {/* Applied Jobs Section */}
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-bold">Applied Jobs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AppliedJobs userId={user?.id} />
-          </CardContent>
-        </Card>
-      </section>
+      
     </main>
   );
 }
