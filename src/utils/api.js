@@ -73,6 +73,27 @@ export const api = {
       throw new Error(err.response?.data?.error?.message || 'Failed to upload profile picture');
     }
   },
+  // Update User CV Files
+updateUserCVs: async (userId, cvFiles, jwt) => {
+  try {
+    const res = await axios.put(
+      `${BASE_URL}/api/users/${userId}`,
+      {
+        cvFiles, // This should be an array of file URLs from Strapi
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwt}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    throw new Error(err.response?.data?.error?.message || 'Failed to update CV files');
+  }
+},
+
 
   // Fetch Job Details
   getJobDetails: async (id) => {

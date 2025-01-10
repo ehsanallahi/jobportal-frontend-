@@ -1,143 +1,172 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 import { api } from '@/utils/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
 
 const BASE_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
-export default function DashboardPage() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function ProfilePage() {
+  const [profile, setProfile] = useState({
+    id: '',
+    username: '',
+    email: '',
+    bio: '',
+    profilePicture: '',
+    skills: [],
+    socialLinks: { twitter: '', linkedin: '', github: '' },
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [file, setFile] = useState(null); // For profile picture upload
+  const jwt = localStorage.getItem('jwt');
 
+  // Fetch user profile data
   useEffect(() => {
-    const jwt = localStorage.getItem('jwt');
-    if (!jwt) {
-      window.location.href = '/login'; // Redirect to login if not authenticated
-    } else {
-      fetchUser(jwt);
-    }
-  }, []);
+    const fetchProfile = async () => {
+      try {
+        const user = await api.getCurrentUser(jwt);
+        setProfile({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          bio: user.bio || '',
+          profilePicture: user.profilePicture
+            ? `${BASE_URL}${user.profilePicture}` // Prepend BASE_URL to the picture URL
+            : '', // Fallback to empty if no picture
+          skills: user.skills || [],
+          socialLinks: user.socialLinks || { twitter: '', linkedin: '', github: '' },
+        });
+      } catch (err) {
+        setError('Failed to fetch profile. Please try again later.');
+      }
+    };
 
-  const fetchUser = async (jwt) => {
+    fetchProfile();
+  }, [jwt]);
+
+  // Handle profile update
+  const handleUpdate = async () => {
     try {
-      const user = await api.getCurrentUser(jwt);
-      setUser({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        bio: user.bio || 'No bio available',
-        profilePicture: user.profilePicture
-          ? `${BASE_URL}${user.profilePicture}`
-          : '/placeholder.png',
-        skills: user.skills || [],
-        socialLinks: user.socialLinks || { twitter: '', linkedin: '', github: '' },
-      });
+      const updatedProfile = await api.updateUserProfile(profile.id, {
+        bio: profile.bio,
+        skills: profile.skills,
+        socialLinks: profile.socialLinks,
+      }, jwt);
+      setProfile((prev) => ({ ...prev, ...updatedProfile }));
+      setMessage('Profile updated successfully!');
+      setIsEditing(false);
     } catch (err) {
-      console.error('Failed to fetch user data:', err);
-    } finally {
-      setLoading(false);
+      setError('Failed to update profile. Please try again.');
     }
   };
 
-  if (loading) {
-    return <p className="text-center mt-8">Loading dashboard...</p>;
-  }
+  // Handle profile picture upload
+  const handleUploadPicture = async () => {
+    if (!file) {
+      setError('Please select a file to upload.');
+      return;
+    }
+
+    try {
+      const uploaded = await api.uploadProfilePicture(file, jwt);
+      const uploadedFile = uploaded[0]; // Assuming single file upload
+      const fullUrl = `${BASE_URL}${uploadedFile.url}`; // Prepend BASE_URL to uploaded file URL
+      setProfile((prev) => ({ ...prev, profilePicture: fullUrl }));
+      setMessage('Profile picture uploaded successfully!');
+    } catch (err) {
+      console.error('Error uploading profile picture:', err.message);
+      setError('Failed to upload profile picture.');
+    }
+  };
 
   return (
-    <main className="p-6 max-w-7xl mx-auto">
-      {/* Welcome Message */}
-      <h1 className="text-3xl font-bold mb-6">Welcome, {user?.username}!</h1>
+    <div className="max-w-4xl mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">Profile Management</h1>
 
-      {/* User Profile Section */}
-      <section className="mb-6">
-        <Card className="bg-gray-50 dark:bg-gray-800">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">User Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Profile Picture */}
-            <div className="flex items-center space-x-4 mb-4">
-              <img
-                src={user?.profilePicture}
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-cover border border-gray-300 dark:border-gray-600"
-              />
-              <div>
-                <p className="text-sm text-gray-500">Username: {user?.username}</p>
-                <p className="text-sm text-gray-500">Email: {user?.email}</p>
-              </div>
-            </div>
+      {/* Alert Messages */}
+      {message && <Alert className="mb-4">{message}</Alert>}
+      {error && <Alert variant="destructive" className="mb-4">{error}</Alert>}
 
-            {/* Bio */}
-            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-              <strong>Bio:</strong> {user?.bio}
-            </p>
+      <Card className="bg-gray-50 dark:bg-gray-800">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">Profile Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <label className="block text-sm font-medium">Profile Picture</label>
+            <img
+              src={profile.profilePicture || '/placeholder.png'}
+              alt="Profile"
+              className="w-24 h-24 rounded-full object-cover border border-gray-300 dark:border-gray-600"
+            />
+            <input
+              type="file"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300"
+            />
+            <Button className="mt-2" onClick={handleUploadPicture}>
+              Upload Picture
+            </Button>
+          </div>
 
-            {/* Skills */}
-            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-              <strong>Skills:</strong> {user?.skills.length > 0 ? user.skills.join(', ') : 'No skills added'}
-            </p>
+          <div className="mb-4">
+            <label className="block text-sm font-medium">Skills</label>
+            <Input
+              value={profile.skills.join(', ')}
+              onChange={(e) =>
+                setProfile((prev) => ({ ...prev, skills: e.target.value.split(', ') }))
+              }
+              placeholder="e.g., JavaScript, React, Node.js"
+            />
+          </div>
 
-            {/* Social Links */}
-            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-              <p>
-                <strong>Twitter:</strong>{' '}
-                {user?.socialLinks.twitter ? (
-                  <a href={user.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                    {user.socialLinks.twitter}
-                  </a>
-                ) : (
-                  'Not added'
-                )}
-              </p>
-              <p>
-                <strong>LinkedIn:</strong>{' '}
-                {user?.socialLinks.linkedin ? (
-                  <a href={user.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                    {user.socialLinks.linkedin}
-                  </a>
-                ) : (
-                  'Not added'
-                )}
-              </p>
-              <p>
-                <strong>GitHub:</strong>{' '}
-                {user?.socialLinks.github ? (
-                  <a href={user.socialLinks.github} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                    {user.socialLinks.github}
-                  </a>
-                ) : (
-                  'Not added'
-                )}
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="mt-4 flex space-x-4">
-              <Button variant="primary" onClick={() => window.location.href = '/profile'}>
-                Update Profile
-              </Button>
-              <Button variant="secondary" onClick={() => window.location.href = '/jobs/create'}>
-                Create New Job
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Recent Jobs Section */}
-      <section className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Recent Jobs</h2>
-        {/* Integrate the RecentJobs component */}
-      </section>
-
-      {/* Applied Jobs Section */}
-      <section className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Applied Jobs</h2>
-        {/* Integrate the AppliedJobs component */}
-      </section>
-    </main>
+          <div className="mb-4">
+            <label className="block text-sm font-medium">Social Links</label>
+            <Input
+              value={profile.socialLinks.twitter}
+              onChange={(e) =>
+                setProfile((prev) => ({
+                  ...prev,
+                  socialLinks: { ...prev.socialLinks, twitter: e.target.value },
+                }))
+              }
+              placeholder="Twitter URL"
+              className="mb-2"
+            />
+            <Input
+              value={profile.socialLinks.linkedin}
+              onChange={(e) =>
+                setProfile((prev) => ({
+                  ...prev,
+                  socialLinks: { ...prev.socialLinks, linkedin: e.target.value },
+                }))
+              }
+              placeholder="LinkedIn URL"
+              className="mb-2"
+            />
+            <Input
+              value={profile.socialLinks.github}
+              onChange={(e) =>
+                setProfile((prev) => ({
+                  ...prev,
+                  socialLinks: { ...prev.socialLinks, github: e.target.value },
+                }))
+              }
+              placeholder="GitHub URL"
+            />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button onClick={handleUpdate} variant="primary">
+            Save Changes
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

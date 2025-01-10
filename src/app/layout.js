@@ -12,7 +12,7 @@ export default function RootLayout({ children }) {
   useEffect(() => {
     const jwt = localStorage.getItem('jwt');
     if (!jwt) {
-      router.push('/'); // Redirect unauthenticated users
+      router.push('/login'); // Redirect unauthenticated users
     }
   }, [router]);
 
