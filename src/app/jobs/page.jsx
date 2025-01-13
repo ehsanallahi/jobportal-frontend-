@@ -16,7 +16,7 @@ export default function JobListings() {
   const [filters, setFilters] = useState({
     keyword: '',
     minSalary: 0,
-    maxSalary: 100000,
+    maxSalary: 1000000,
     jobType: 'all',
     experience: 'all',
   });

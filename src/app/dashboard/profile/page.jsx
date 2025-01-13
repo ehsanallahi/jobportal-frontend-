@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/utils/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {Textarea} from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 
@@ -52,11 +53,15 @@ export default function ProfilePage() {
   // Handle profile update
   const handleUpdate = async () => {
     try {
-      const updatedProfile = await api.updateUserProfile(profile.id, {
-        bio: profile.bio,
-        skills: profile.skills,
-        socialLinks: profile.socialLinks,
-      }, jwt);
+      const updatedProfile = await api.updateUserProfile(
+        profile.id,
+        {
+          bio: profile.bio,
+          skills: profile.skills,
+          socialLinks: profile.socialLinks,
+        },
+        jwt
+      );
       setProfile((prev) => ({ ...prev, ...updatedProfile }));
       setMessage('Profile updated successfully!');
       setIsEditing(false);
@@ -98,20 +103,16 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
           <div className="mb-4">
-            <label className="block text-sm font-medium">Profile Picture</label>
-            <img
-              src={profile.profilePicture || '/placeholder.png'}
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border border-gray-300 dark:border-gray-600"
+            <label className="block text-sm font-medium">Bio</label>
+            <Textarea
+              value={profile.bio}
+              onChange={(e) =>
+                setProfile((prev) => ({ ...prev, bio: e.target.value }))
+              }
+              placeholder="Tell us about yourself"
+              rows={4}
+              className="mt-1 block w-full"
             />
-            <input
-              type="file"
-              onChange={(e) => setFile(e.target.files[0])}
-              className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300"
-            />
-            <Button className="mt-2" onClick={handleUploadPicture}>
-              Upload Picture
-            </Button>
           </div>
 
           <div className="mb-4">
