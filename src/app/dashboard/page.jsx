@@ -231,14 +231,14 @@ export default function DashboardPage() {
         </Card>
 
         {/* Dashboard Overview Section */}
-        <Card className="bg-blue-50 dark:bg-blue-900">
+        {/* <Card className="bg-blue-50 dark:bg-blue-900">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Dashboard Overview</CardTitle>
           </CardHeader>
           <CardContent>
             <StatisticsCard userId={user?.id} />
           </CardContent>
-        </Card>
+        </Card> */}
       </section>
 
     
